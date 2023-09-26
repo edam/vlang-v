@@ -734,6 +734,9 @@ fn handle_route[T](mut app T, url urllib.URL, host string, routes &map[string]Ro
 	// Static handling
 	if serve_if_static[T](mut app, url, host) {
 		// successfully served a static file
+		$if trace_vweb ? {
+			eprintln('> vweb: ${app.req.method} ${url.path} -> static content')
+		}
 		return
 	}
 
@@ -771,19 +774,51 @@ fn handle_route[T](mut app T, url urllib.URL, host string, routes &map[string]Ro
 							}
 
 							if route.middleware == '' {
-								app.$method(args)
+								$if trace_vweb ? {
+									eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}(${args.join(', ')})')
+								}
+								app.$method(args) or {
+									$if trace_vweb ? {
+										eprintln('> vweb: ${url.path}: ${err}')
+									}
+									app.server_error(500)
+								}
 							} else if validate_app_middleware(mut app, route.middleware,
 								method.name)
 							{
-								app.$method(args)
+								$if trace_vweb ? {
+									eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}(${args.join(', ')})')
+								}
+								app.$method(args) or {
+									$if trace_vweb ? {
+										eprintln('> vweb: ${url.path}: ${err}')
+									}
+									app.server_error(500)
+								}
 							}
 						} else {
 							if route.middleware == '' {
-								app.$method()
+								$if trace_vweb ? {
+									eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}()')
+								}
+								app.$method() or {
+									$if trace_vweb ? {
+										eprintln('> vweb: ${url.path}: ${err}')
+									}
+									app.server_error(500)
+								}
 							} else if validate_app_middleware(mut app, route.middleware,
 								method.name)
 							{
-								app.$method()
+								$if trace_vweb ? {
+									eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}()')
+								}
+								app.$method() or {
+									$if trace_vweb ? {
+										eprintln('> vweb: ${url.path}: ${err}')
+									}
+									app.server_error(500)
+								}
 							}
 						}
 						return
@@ -796,9 +831,25 @@ fn handle_route[T](mut app T, url urllib.URL, host string, routes &map[string]Ro
 							}
 						}
 						if route.middleware == '' {
-							app.$method()
+							$if trace_vweb ? {
+								eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}()')
+							}
+							app.$method() or {
+								$if trace_vweb ? {
+									eprintln('> vweb: ${url.path}: ${err}')
+								}
+								app.server_error(500)
+							}
 						} else if validate_app_middleware(mut app, route.middleware, method.name) {
-							app.$method()
+							$if trace_vweb ? {
+								eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}()')
+							}
+							app.$method() or {
+								$if trace_vweb ? {
+									eprintln('> vweb: ${url.path}: ${err}')
+								}
+								app.server_error(500)
+							}
 						}
 						return
 					}
@@ -815,9 +866,25 @@ fn handle_route[T](mut app T, url urllib.URL, host string, routes &map[string]Ro
 							}
 						}
 						if route.middleware == '' {
-							app.$method(method_args)
+							$if trace_vweb ? {
+								eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}(${method_args.join(', ')})')
+							}
+							app.$method(method_args) or {
+								$if trace_vweb ? {
+									eprintln('> vweb: ${url.path}: ${err}')
+								}
+								app.server_error(500)
+							}
 						} else if validate_app_middleware(mut app, route.middleware, method.name) {
-							app.$method(method_args)
+							$if trace_vweb ? {
+								eprintln('> vweb: ${app.req.method} ${url.path} -> ${method.name}(${method_args.join(', ')})')
+							}
+							app.$method(method_args) or {
+								$if trace_vweb ? {
+									eprintln('> vweb: ${url.path}: ${err}')
+								}
+								app.server_error(500)
+							}
 						}
 						return
 					}
@@ -826,6 +893,9 @@ fn handle_route[T](mut app T, url urllib.URL, host string, routes &map[string]Ro
 		}
 	}
 	// Route not found
+	$if trace_vweb ? {
+		eprintln('> vweb: ${app.req.method} ${url.path} -> not_found()')
+	}
 	app.not_found()
 }
 
